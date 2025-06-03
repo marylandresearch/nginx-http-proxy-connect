@@ -1,0 +1,106 @@
+include:
+  - component: $CI_SERVER_FQDN/marylandresearch/kaniko/kaniko@2
+  - template: Jobs/Container-Scanning.latest.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - local: .gitlab/ci/*.gitlab-ci.yml
+
+stages:
+- build
+- test
+- deploy
+- promote
+- publish
+
+build_image:
+  extends:
+    - .build_with_kaniko
+  variables:
+    HTTP_PROXY_CONNECT_VERSION: "0.0.7"
+    HTTP_PROXY_CONNECT_PATCH: "proxy_connect_rewrite_102101.patch"
+    NGINX_VERSION: "1.27.5"
+    KANIKO_CACHE_ARGS: ""
+    KANIKO_CONTEXT: "mainline/$FLAVOR"
+    KANIKO_DOCKERFILE: "mainline/$FLAVOR/Dockerfile"
+    KANIKO_TAG_SUFFIX: "$FLAVOR"
+    KANIKO_ARGS:
+      --build-arg "NGINX_VERSION=${NGINX_VERSION}"
+      --build-arg "HTTP_PROXY_CONNECT_VERSION=${HTTP_PROXY_CONNECT_VERSION}"
+      --build-arg "HTTP_PROXY_CONNECT_PATCH=${HTTP_PROXY_CONNECT_PATCH}"
+  parallel:
+    matrix:
+      - FLAVOR: &tag_flavors
+        - alpine
+        - alpine-slim
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $KANIKO_COMP_DISABLED
+      when: never
+    - exists:
+        - $KANIKO_DOCKERFILE
+
+test-proxy:
+  stage: test
+  image: curlimages/curl:latest
+  services:
+    - name: $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-${FLAVOR}
+      alias: nginx-http-proxy-connect
+  retry: 2
+  parallel:
+    matrix:
+      - FLAVOR: *tag_flavors
+  script:
+    # wait for nginx to start up
+    - sleep 5
+    - echo "Testing nginx proxy using curl"
+    - curl -v --fail-with-body -x http://nginx-http-proxy-connect:3128 https://gitlab.com
+
+container_scanning:
+  variables:
+    CS_IMAGE: $CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-${FLAVOR}
+  dependencies:
+    - get_unique_semversion
+  parallel:
+    matrix:
+      - FLAVOR: *tag_flavors
+
+promote:
+  stage: promote
+  image:
+    name: quay.io/skopeo/stable:latest
+    entrypoint: [""]
+  script:
+    - skopeo login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - skopeo login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD" $REGISTRY_HOST
+    - echo "Publishing image to $REGISTRY_HOST/$REGISTRY_REPOSITORY:${GitVersion_SemVer}-${FLAVOR}..."
+    - skopeo copy
+        docker://$CI_REGISTRY_IMAGE:${CI_COMMIT_SHORT_SHA}-${FLAVOR}
+        docker://$REGISTRY_HOST/$REGISTRY_REPOSITORY:${GitVersion_SemVer}-${FLAVOR}
+  parallel:
+    matrix:
+      - REGISTRY_HOST:
+          - docker.io
+          - registry.gitlab.com
+          - ghcr.io
+        FLAVOR: *tag_flavors
+  environment:
+    name: $REGISTRY_HOST/${FLAVOR}
+  rules:
+    - if: $CI_COMMIT_TAG
+
+update-dockerhub-readme:
+  stage: publish
+  image:
+    name: peterevans/dockerhub-description:4
+    entrypoint: [""]
+  variables:
+    DOCKERHUB_USERNAME: $REGISTRY_USER
+    DOCKERHUB_PASSWORD: $REGISTRY_PASSWORD
+    DOCKERHUB_REPOSITORY: $REGISTRY_REPOSITORY
+    README_FILEPATH: README.md
+  script:
+    - /entrypoint.sh
+  only:
+    - main
+  environment:
+    name: docker.io/README
