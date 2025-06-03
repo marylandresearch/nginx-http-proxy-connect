@@ -1,0 +1,14 @@
+server {
+
+    listen 3128;
+
+    proxy_connect;
+
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=5s;
+
+    location / {
+        add_header "Content-Type" "text/plain" always;
+        return 200 "http proxy is active!";
+    }
+
+}
