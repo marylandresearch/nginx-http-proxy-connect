@@ -29,7 +29,8 @@ See available tags and versions at https://hub.docker.com/r/marylandresearch/ngi
 The images are deployed to the following registries:
 - [docker.io](https://hub.docker.com/r/marylandresearch/nginx-http-proxy-connect)
 - [registry.gitlab.com](https://gitlab.com/marylandresearch/nginx-http-proxy-connect/container_registry)
-- [ghcr.io](https://github.com/marylandresearch/nginx-http-proxy-connect/pkgs/container/nginx-http-proxy-connect)
+- [ghcr.io](https://github.com/orgs/marylandresearch/packages/container/package/nginx-http-proxy-connect)
+
 
 The images are deployed with the following flavors:
 - alpine

@@ -8,7 +8,6 @@ stages:
 - build
 - test
 - deploy
-- promote
 - publish
 
 workflow:
@@ -72,7 +71,7 @@ container_scanning:
       - FLAVOR: *tag_flavors
 
 promote:
-  stage: promote
+  stage: publish
   image:
     name: quay.io/skopeo/stable:latest
     entrypoint: [""]
@@ -94,6 +93,7 @@ promote:
     name: $REGISTRY_HOST/${FLAVOR}
   only:
     - main
+  when: manual
 
 update-dockerhub-readme:
   stage: publish
