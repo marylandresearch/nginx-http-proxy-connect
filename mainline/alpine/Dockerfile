@@ -1,4 +1,4 @@
-ARG NGINX_VERSION=1.27.5
+ARG NGINX_VERSION=1.29.0
 
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine AS builder
 

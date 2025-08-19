@@ -17,7 +17,7 @@ The third-party module, [ngx_http_proxy_connect_module](https://github.com/chobi
 To start up the container, run:
 
 ```bash
-docker run -p 3128:3128 marylandresearch/nginx-http-proxy-connect:1.27.5-alpine-slim
+docker run -p 3128:3128 marylandresearch/nginx-http-proxy-connect:1.29.0-alpine-slim
 ```
 
 This command maps port `3128` on your host to port `3128` in the container, where your proxy server is listening.
@@ -56,7 +56,7 @@ The proxy configuration is based on the template found at `nginx/templates/proxy
 docker run \
   -p 3128:3128 \
   -v /path/to/your/proxy.conf.template:/etc/nginx/templates/proxy.conf.template \
-  marylandresearch/nginx-http-proxy-connect:1.27.5-alpine-slim
+  marylandresearch/nginx-http-proxy-connect:1.29.0-alpine-slim
 ```
 
 ### Example Proxy Configuration
