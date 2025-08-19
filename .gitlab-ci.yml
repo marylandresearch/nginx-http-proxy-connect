@@ -23,7 +23,7 @@ build_image:
   variables:
     HTTP_PROXY_CONNECT_VERSION: "0.0.7"
     HTTP_PROXY_CONNECT_PATCH: "proxy_connect_rewrite_102101.patch"
-    NGINX_VERSION: "1.28.0"
+    NGINX_VERSION: "1.29.0"
     KANIKO_CACHE_ARGS: ""
     KANIKO_CONTEXT: "mainline/$FLAVOR"
     KANIKO_DOCKERFILE: "mainline/$FLAVOR/Dockerfile"
