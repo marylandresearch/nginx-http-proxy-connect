@@ -1,4 +1,4 @@
-ARG NGINX_VERSION=1.29.0
+ARG NGINX_VERSION=1.29.1
 
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine-slim AS builder
 
